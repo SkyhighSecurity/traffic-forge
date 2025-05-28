@@ -25,7 +25,7 @@ class CEFFormatter(LogFormatter):
         super().__init__(output_dir)
         self.vendor = "McAfee"
         self.product = "Web Gateway"
-        self.product_version = "8.2.9"
+        self.product_version = "12.2.19"  # Using realistic version number
         self.cef_version = "0"  # CEF version is always 0
         self.current_file = None
         self.current_date = None

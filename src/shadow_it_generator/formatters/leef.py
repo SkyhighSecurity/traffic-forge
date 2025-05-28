@@ -26,7 +26,7 @@ class LEEFFormatter(LogFormatter):
         super().__init__(output_dir)
         self.vendor = "McAfee"
         self.product = "Web Gateway"
-        self.product_version = "10.15.0.623"
+        self.product_version = "12.2.19"  # Using realistic version number
         self.leef_version = "2.0"
         self.current_file = None
         self.current_date = None
@@ -76,14 +76,32 @@ class LEEFFormatter(LogFormatter):
         fields.append(f"devTime={dev_time}")
         fields.append(f"src={event.source_ip}")
         fields.append(f"dst={event.destination_ip}")
+        fields.append(f"srcPort={event.source_port}")
+        fields.append(f"dstPort={event.destination_port}")
         fields.append(f"usrName={self._escape_value(event.username)}")
+        fields.append(f"domain={self._escape_value(event.user_domain)}")
         fields.append(f"request={self._escape_value(event.url)}")
+        fields.append(f"method={event.method}")
+        fields.append(f"proto={event.protocol}")
+        fields.append(f"status={event.status_code}")
         fields.append(f"action={event.action}")
         fields.append(f"cat={self._escape_value(event.category)}")
+        fields.append(f"riskLevel={event.risk_level}")
         
-        # Optional fields that may be included
+        # Bytes and performance
+        fields.append(f"bytesIn={event.bytes_received}")
+        fields.append(f"bytesOut={event.bytes_sent}")
+        fields.append(f"responseTime={event.duration_ms}")
+        
+        # User agent
+        fields.append(f"userAgent={self._escape_value(event.user_agent)}")
+        
+        # Optional fields
         if event.service_name and event.service_name != 'Internet':
             fields.append(f"app={self._escape_value(event.service_name)}")
+        
+        if event.referrer:
+            fields.append(f"referrer={self._escape_value(event.referrer)}")
         
         # Combine header and fields with tab separator
         leef_line = header + '\t'.join(fields)
