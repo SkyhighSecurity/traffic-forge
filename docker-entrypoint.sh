@@ -6,6 +6,9 @@ set -e
 CONFIG_DIR="${SKYHIGH_CONFIG_DIR:-/etc/skyhigh-traffic-forge}"
 OUTPUT_DIR="${SKYHIGH_OUTPUT_DIR:-/var/log/skyhigh-traffic-forge}"
 
+# Ensure output directory exists (for volume mounts)
+mkdir -p "$OUTPUT_DIR"
+
 # Check if this is the first run (no config exists)
 if [ ! -f "$CONFIG_DIR/enterprise.yaml" ]; then
     echo "=========================================="
@@ -38,5 +41,10 @@ if [ ! -f "$CONFIG_DIR/enterprise.yaml" ]; then
     exit 1
 fi
 
-# If config exists, run the command
-exec skyhigh-traffic-forge "$@"
+# If config exists, run the command with proper directories
+# Add output-dir if not already specified
+if [[ ! " $@ " =~ " --output-dir " ]]; then
+    exec skyhigh-traffic-forge "$@" --output-dir "$OUTPUT_DIR"
+else
+    exec skyhigh-traffic-forge "$@"
+fi

@@ -25,6 +25,19 @@ if not DEFAULT_OUTPUT_DIR.exists():
 if not DEFAULT_DATA_DIR.exists():
     DEFAULT_DATA_DIR = Path("./data")
 
+def get_output_dir():
+    """Get output directory from environment or defaults."""
+    import os
+    env_dir = os.environ.get('SKYHIGH_OUTPUT_DIR')
+    if env_dir:
+        return Path(env_dir)
+    
+    # Check runtime paths (for Docker volumes)
+    if Path("/var/log/skyhigh-traffic-forge").exists():
+        return Path("/var/log/skyhigh-traffic-forge")
+    
+    return DEFAULT_OUTPUT_DIR
+
 
 def init_command(args):
     """Initialize configuration directory with base files."""
@@ -71,7 +84,14 @@ def init_command(args):
 def generate_command(args):
     """Generate logs based on mode (batch or realtime)."""
     config_dir = Path(args.config_dir)
-    output_dir = Path(args.output_dir)
+    
+    # Use runtime output directory check
+    if args.output_dir == str(DEFAULT_OUTPUT_DIR):
+        # User didn't specify, use runtime default
+        output_dir = get_output_dir()
+    else:
+        # User specified a directory
+        output_dir = Path(args.output_dir)
     
     # Check if configuration exists
     if not config_dir.exists() or not (config_dir / "enterprise.yaml").exists():

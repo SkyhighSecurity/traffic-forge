@@ -5,6 +5,9 @@ Generates both US and international names in firstname.lastname@domain format.
 """
 
 import random
+import json
+from datetime import datetime
+from pathlib import Path
 from typing import List, Tuple, Dict, Set
 from faker import Faker
 
@@ -16,16 +19,18 @@ class UserGenerator:
     Creates email addresses in the format: firstname.lastname@domain
     """
     
-    def __init__(self, enterprise_domain: str, seed: int = None):
+    def __init__(self, enterprise_domain: str, seed: int = None, cache_file: Path = None):
         """
         Initialize the user generator.
         
         Args:
             enterprise_domain: The domain to use for email addresses
             seed: Random seed for reproducible results
+            cache_file: Path to cache file for persistent usernames
         """
         self.enterprise_domain = enterprise_domain
         self.generated_emails: Set[str] = set()
+        self.cache_file = cache_file
         
         if seed:
             random.seed(seed)
@@ -200,6 +205,35 @@ class UserGenerator:
             'full_name': f"{first_name} {last_name}"
         }
     
+    def _load_cached_users(self) -> List[str]:
+        """Load cached usernames from file."""
+        if not self.cache_file or not self.cache_file.exists():
+            return []
+        
+        try:
+            with open(self.cache_file, 'r') as f:
+                data = json.load(f)
+                return data.get('usernames', [])
+        except (json.JSONDecodeError, IOError):
+            return []
+    
+    def _save_cached_users(self, usernames: List[str]) -> None:
+        """Save usernames to cache file."""
+        if not self.cache_file:
+            return
+        
+        # Ensure directory exists
+        self.cache_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        data = {
+            'usernames': usernames,
+            'generated_at': datetime.now().isoformat(),
+            'version': '1.0'
+        }
+        
+        with open(self.cache_file, 'w') as f:
+            json.dump(data, f, indent=2)
+    
     def generate_users(self, count: int) -> List[Dict[str, str]]:
         """
         Generate multiple unique users.
@@ -210,10 +244,14 @@ class UserGenerator:
         Returns:
             List of user dictionaries
         """
+        # Load cached usernames
+        cached_usernames = self._load_cached_users()
         users = []
+        usernames_to_save = []
         
-        # Add some common service accounts first
-        service_accounts = [
+        # Service accounts (always the same)
+        service_accounts = ['admin', 'service.account', 'noreply']
+        service_users = [
             {
                 'first_name': 'Admin',
                 'last_name': 'User',
@@ -241,14 +279,45 @@ class UserGenerator:
         ]
         
         # Add service accounts if count allows
-        for account in service_accounts:
+        for account in service_users:
             if len(users) < count:
                 users.append(account)
-                self.generated_emails.add(account['email'])
+                usernames_to_save.append(account['username'])
         
-        # Generate remaining users
+        # Use cached usernames first
+        cached_idx = 0
+        while len(users) < count and cached_idx < len(cached_usernames):
+            username = cached_usernames[cached_idx]
+            if username not in service_accounts:  # Skip service accounts
+                # Reconstruct user info from username
+                parts = username.split('.')
+                if len(parts) >= 2:
+                    first_name = parts[0].capitalize()
+                    last_name = '.'.join(parts[1:]).capitalize()
+                else:
+                    first_name = username.capitalize()
+                    last_name = 'User'
+                
+                user = {
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'email': f'{username}@{self.enterprise_domain}',
+                    'username': username,
+                    'locale': 'Cached',
+                    'full_name': f'{first_name} {last_name}'
+                }
+                users.append(user)
+                usernames_to_save.append(username)
+            cached_idx += 1
+        
+        # Generate new users if needed
         while len(users) < count:
-            users.append(self.generate_user())
+            user = self.generate_user()
+            users.append(user)
+            usernames_to_save.append(user['username'])
+        
+        # Save all usernames (old + new) to cache
+        self._save_cached_users(usernames_to_save)
         
         return users
     

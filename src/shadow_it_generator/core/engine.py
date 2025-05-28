@@ -75,8 +75,13 @@ class LogGenerationEngine:
             vpn_subnets=enterprise_config.network.get('vpn_subnets', [])
         )
         
+        # Get config directory for user cache
+        config_dir = Path(enterprise_config.enterprise.get('config_dir', '/etc/skyhigh-traffic-forge'))
+        cache_file = config_dir / "users.json"
+        
         self.user_generator = UserGenerator(
-            enterprise_domain=enterprise_config.enterprise['domain']
+            enterprise_domain=enterprise_config.enterprise['domain'],
+            cache_file=cache_file
         )
         
         # Initialize junk traffic generator if enabled

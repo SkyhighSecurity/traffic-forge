@@ -79,6 +79,7 @@ After initialization, your directory structure will look like:
 ├── docker-compose.yml
 ├── config/
 │   ├── enterprise.yaml         # Main configuration
+│   ├── users.json              # Persistent user cache (auto-generated)
 │   └── cloud-services/         # Service definitions
 │       ├── salesforce.yaml
 │       ├── dropbox.yaml
@@ -125,6 +126,16 @@ The docker-compose.yml uses two volumes:
    - Where generated log files are written
    - Organized by date (YYYY-MM-DD folders)
    - Can be mounted read-only by other containers for processing
+
+## User Persistence
+
+The generator automatically maintains a persistent user cache in `config/users.json`. This ensures:
+
+- **Consistent usernames** across restarts and invocations
+- **Accurate user tracking** in log analysis tools
+- **Automatic scaling** when you change the total_users count
+
+The cache stores only the username portion (e.g., "john.smith") allowing the domain to be changed if needed. When you increase the user count, new users are generated and added. When you decrease it, only the first N users are used.
 
 ## Environment Variables
 

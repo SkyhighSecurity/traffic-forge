@@ -3,8 +3,8 @@
 
 enterprise:
   name: "Acme Corporation"
-  total_users: 5000
-  domain: "acme.com"
+  total_users: 5000      # Total number of unique users in the organization
+  domain: "acme.com"     # Email domain for user accounts
   
 network:
   # Source IP ranges for user traffic

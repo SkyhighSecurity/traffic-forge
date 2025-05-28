@@ -23,13 +23,23 @@ class RealtimeGenerator:
         with open(config_dir / "enterprise.yaml", 'r') as f:
             self.config = yaml.safe_load(f)
         
-        # Initialize user generator
+        # Initialize user generator with cache file
         domain = self.config['enterprise']['domain']
-        self.user_generator = UserGenerator(domain)
+        cache_file = config_dir / "users.json"
+        self.user_generator = UserGenerator(domain, cache_file=cache_file)
         
-        # Generate a pool of users
-        user_count = min(self.config['enterprise'].get('total_users', 5000), 100)  # Cap at 100 for realtime
+        # Generate a pool of users matching enterprise configuration
+        user_count = self.config['enterprise'].get('total_users', 5000)
         self.users = self.user_generator.generate_users(user_count)
+        
+        # For performance in realtime mode, create an active user subset
+        # This represents users who are currently active (e.g., during business hours)
+        # Typically 10-20% of users are active at any given time
+        active_user_percentage = 0.15  # 15% of users active
+        self.active_user_count = max(1, int(user_count * active_user_percentage))
+        
+        # Randomly select the active users for this session
+        self.active_users = random.sample(self.users, min(self.active_user_count, len(self.users)))
         
         # Load cloud services (not junk sites)
         self.services = []
@@ -57,24 +67,58 @@ class RealtimeGenerator:
         
         # Setup signal handler
         signal.signal(signal.SIGINT, lambda s, f: setattr(self, 'running', False))
+        
+        print(f"Loaded {user_count} total users from enterprise configuration")
+        print(f"Using {len(self.active_users)} active users for this session")
+        print(f"Loaded {len(self.services)} cloud services")
+        
+        # Track when we last rotated users (for shift changes)
+        self.last_user_rotation = datetime.now()
+        self.rotation_interval = timedelta(hours=4)  # Rotate active users every 4 hours
     
     def run(self, display_mode: str = "both"):
         """Run the real-time generator."""
         self.running = True
-        output_file = self.output_dir / f"realtime_{datetime.now().strftime('%Y%m%d')}.log"
+        
+        # Organize logs by date
+        today = datetime.now()
+        date_dir = self.output_dir / today.strftime('%Y-%m-%d')
+        date_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create hourly log file
+        output_file = date_dir / f"traffic_{today.strftime('%Y-%m-%d_%H')}.log"
         
         print(f"Generating real-time logs...")
         print(f"Output: {output_file}")
         print(f"Speed: {self.speed_multiplier}x")
         print("Press Ctrl+C to stop\n")
         
-        with open(output_file, 'a') as f:
+        current_hour = today.hour
+        f = open(output_file, 'a')
+        
+        try:
             event_count = 0
             start_time = time.time()
             
             while self.running:
+                # Check if we should rotate active users (shift change)
+                current_time = datetime.now()
+                if current_time - self.last_user_rotation > self.rotation_interval:
+                    self._rotate_active_users()
+                    self.last_user_rotation = current_time
+                
+                # Check if hour changed (rotate log file)
+                if current_time.hour != current_hour:
+                    f.close()
+                    date_dir = self.output_dir / current_time.strftime('%Y-%m-%d')
+                    date_dir.mkdir(parents=True, exist_ok=True)
+                    output_file = date_dir / f"traffic_{current_time.strftime('%Y-%m-%d_%H')}.log"
+                    f = open(output_file, 'a')
+                    current_hour = current_time.hour
+                    print(f"\n[Log Rotation] New log file: {output_file}\n")
+                
                 # Generate some events
-                timestamp = datetime.now()
+                timestamp = current_time
                 events_per_cycle = random.randint(1, 5)
                 
                 for _ in range(events_per_cycle):
@@ -99,12 +143,30 @@ class RealtimeGenerator:
                 # Sleep based on speed multiplier
                 time.sleep(1.0 / self.speed_multiplier)
         
+        finally:
+            f.close()
+        
         print(f"\nGenerated {event_count} events")
+    
+    def _rotate_active_users(self):
+        """Rotate active users to simulate shift changes."""
+        # Keep 50% of current active users (overlap between shifts)
+        keep_count = len(self.active_users) // 2
+        continuing_users = random.sample(self.active_users, keep_count)
+        
+        # Add new users for the new shift
+        new_count = self.active_user_count - keep_count
+        available_users = [u for u in self.users if u not in continuing_users]
+        new_users = random.sample(available_users, min(new_count, len(available_users)))
+        
+        self.active_users = continuing_users + new_users
+        print(f"\n[Shift Change] Rotated active users: {keep_count} continuing, {len(new_users)} new\n")
     
     def _generate_event(self, timestamp: datetime) -> dict:
         """Generate a random event."""
-        # Select a user
-        user = random.choice(self.users)
+        # Select a user from the active users
+        # This ensures we're reusing the same pool of users throughout the session
+        user = random.choice(self.active_users)
         
         # Decide type of traffic (70% cloud services, 30% junk/internet)
         if random.random() < 0.7 and self.services:

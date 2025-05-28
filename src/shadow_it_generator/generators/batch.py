@@ -18,6 +18,15 @@ class BatchGenerator:
         with open(config_dir / "enterprise.yaml", 'r') as f:
             self.config = yaml.safe_load(f)
         
+        # Initialize user generator with cache file
+        domain = self.config['enterprise']['domain']
+        cache_file = config_dir / "users.json"
+        self.user_generator = UserGenerator(domain, cache_file=cache_file)
+        
+        # Generate users from cache
+        user_count = self.config['enterprise'].get('total_users', 5000)
+        self.users = self.user_generator.generate_users(user_count)
+        
         # Load some services
         self.services = []
         services_dir = config_dir / "cloud-services"
@@ -27,7 +36,10 @@ class BatchGenerator:
     
     def generate(self, start_time: datetime, end_time: datetime, format: str = "leef") -> Path:
         """Generate batch logs for time period."""
-        output_file = self.output_dir / f"batch_{start_time.strftime('%Y%m%d')}_{end_time.strftime('%Y%m%d')}.log"
+        # Use date-based directory structure
+        date_dir = self.output_dir / start_time.strftime('%Y-%m-%d')
+        date_dir.mkdir(parents=True, exist_ok=True)
+        output_file = date_dir / f"batch_{start_time.strftime('%Y%m%d')}_{end_time.strftime('%Y%m%d')}.log"
         
         print(f"Generating batch logs...")
         print(f"Period: {start_time} to {end_time}")
@@ -67,11 +79,11 @@ class BatchGenerator:
     def _generate_event(self, timestamp: datetime) -> dict:
         """Generate a random event."""
         service = random.choice(self.services)
-        domain = self.config['enterprise']['domain']
+        user = random.choice(self.users)
         
         return {
             'timestamp': timestamp,
-            'user': f"user{random.randint(1,100)}@{domain}",
+            'user': user['email'],
             'service': service['service']['name'],
             'domain': service['network']['domains'][0].replace('*.', ''),
             'action': 'blocked' if random.random() < 0.1 else 'allowed',
