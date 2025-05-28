@@ -44,6 +44,25 @@ init_config() {
     # Create config directory if it doesn't exist
     mkdir -p ./config
     
+    # Check if docker-compose.init.yml exists, if not create it
+    if [ ! -f ./docker-compose.init.yml ]; then
+        echo "Creating docker-compose.init.yml..."
+        cat > docker-compose.init.yml << 'EOF'
+# Docker Compose file for initialization only
+version: '3.8'
+
+services:
+  init:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: skyhigh-traffic-forge-init
+    volumes:
+      - ./config:/etc/skyhigh-traffic-forge
+    command: init
+    restart: "no"
+    user: "${UID:-1000}:${GID:-1000}"
+EOF
+    fi
+    
     # Run init using docker compose
     docker compose -f docker-compose.init.yml up
     

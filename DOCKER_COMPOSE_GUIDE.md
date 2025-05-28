@@ -10,36 +10,58 @@ This guide explains how to use Docker Compose to run Skyhigh Traffic Forge for g
 
 ## Quick Start
 
-1. **Download the docker-compose.yml file**:
-   ```bash
-   curl -O https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/docker-compose.yml
-   ```
+### Option 1: Using the quick-start script (Recommended)
+```bash
+# Download files
+curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/docker-compose.yml
+curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/quick-start.sh
+chmod +x quick-start.sh
 
-2. **Initialize the configuration** (first time only):
-   ```bash
-   docker compose run --rm traffic-forge init
-   ```
+# Initialize
+./quick-start.sh init
+```
 
-3. **Edit the configuration**:
-   ```bash
-   # Edit the main configuration
-   nano ./config/enterprise.yaml
-   
-   # Optionally edit service definitions
-   nano ./config/cloud-services/*.yaml
-   ```
+### Option 2: Manual Docker Compose
+```bash
+# Download docker-compose.yml
+curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/docker-compose.yml
 
-4. **Start generating logs**:
-   ```bash
-   # Start in detached mode
-   docker compose up -d
-   
-   # View logs
-   docker compose logs -f
-   
-   # Stop generation
-   docker compose down
-   ```
+# Initialize the configuration (first time only)
+docker compose run --rm traffic-forge init
+```
+
+### Option 3: Direct Docker command
+```bash
+# Create config directory and initialize
+mkdir -p config
+docker run --rm -v $(pwd)/config:/etc/skyhigh-traffic-forge \
+  ghcr.io/skyhighsecurity/traffic-forge:latest init
+```
+
+## Configuration
+
+After initialization, edit the configuration:
+```bash
+# Edit the main configuration
+nano ./config/enterprise.yaml
+
+# Optionally edit service definitions
+nano ./config/cloud-services/*.yaml
+```
+
+## Starting the Generator
+
+Start generating logs:
+```bash
+# Start in detached mode
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop generation
+docker compose down
+```
 
 ## Directory Structure
 
