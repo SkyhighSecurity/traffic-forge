@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import random
 import yaml
+from ..utils.user_generator import UserGenerator
 
 
 class BatchGenerator:

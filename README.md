@@ -31,7 +31,7 @@ Generate realistic web gateway traffic logs for CASB (Cloud Access Security Brok
 
 2. **Configure your organization**:
    ```bash
-   # Edit the configuration file
+   # Edit the configuration file (relative to current directory)
    nano ./config/enterprise.yaml
    ```
 

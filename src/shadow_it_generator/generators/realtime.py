@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import random
 import yaml
 import json
+from ..utils.user_generator import UserGenerator
 
 
 class RealtimeGenerator:
@@ -22,12 +23,37 @@ class RealtimeGenerator:
         with open(config_dir / "enterprise.yaml", 'r') as f:
             self.config = yaml.safe_load(f)
         
-        # Load some services
+        # Initialize user generator
+        domain = self.config['enterprise']['domain']
+        self.user_generator = UserGenerator(domain)
+        
+        # Generate a pool of users
+        user_count = min(self.config['enterprise'].get('total_users', 5000), 100)  # Cap at 100 for realtime
+        self.users = self.user_generator.generate_users(user_count)
+        
+        # Load cloud services (not junk sites)
         self.services = []
         services_dir = config_dir / "cloud-services"
-        for yaml_file in list(services_dir.glob("*.yaml"))[:50]:  # Load first 50
+        service_files = list(services_dir.glob("*.yaml"))
+        
+        # Load all services but categorize them
+        self.sanctioned_services = []
+        self.unsanctioned_services = []
+        self.blocked_services = []
+        
+        for yaml_file in service_files:
             with open(yaml_file, 'r') as f:
-                self.services.append(yaml.safe_load(f))
+                service = yaml.safe_load(f)
+                self.services.append(service)
+                
+                # Categorize by status
+                status = service['service']['status']
+                if status == 'sanctioned':
+                    self.sanctioned_services.append(service)
+                elif status == 'unsanctioned':
+                    self.unsanctioned_services.append(service)
+                elif status == 'blocked':
+                    self.blocked_services.append(service)
         
         # Setup signal handler
         signal.signal(signal.SIGINT, lambda s, f: setattr(self, 'running', False))
@@ -77,17 +103,59 @@ class RealtimeGenerator:
     
     def _generate_event(self, timestamp: datetime) -> dict:
         """Generate a random event."""
-        service = random.choice(self.services)
-        domain = self.config['enterprise']['domain']
+        # Select a user
+        user = random.choice(self.users)
         
-        return {
-            'timestamp': timestamp,
-            'user': f"user{random.randint(1,100)}@{domain}",
-            'service': service['service']['name'],
-            'domain': service['network']['domains'][0].replace('*.', ''),
-            'action': 'blocked' if random.random() < 0.1 else 'allowed',
-            'category': service['service']['category']
-        }
+        # Decide type of traffic (70% cloud services, 30% junk/internet)
+        if random.random() < 0.7 and self.services:
+            # Cloud service traffic
+            # Choose service based on user type simulation
+            rand = random.random()
+            if rand < 0.6 and self.sanctioned_services:  # 60% sanctioned
+                service = random.choice(self.sanctioned_services)
+            elif rand < 0.9 and self.unsanctioned_services:  # 30% unsanctioned
+                service = random.choice(self.unsanctioned_services)
+            elif self.blocked_services:  # 10% blocked
+                service = random.choice(self.blocked_services)
+            else:
+                service = random.choice(self.services)
+            
+            domain = random.choice(service['network']['domains']).replace('*.', '')
+            action = 'blocked' if service['service']['status'] == 'blocked' else 'allowed'
+            
+            return {
+                'timestamp': timestamp,
+                'user': user['email'],
+                'service': service['service']['name'],
+                'domain': domain,
+                'action': action,
+                'category': service['service']['category']
+            }
+        else:
+            # Junk/internet traffic
+            junk_sites = [
+                {'domain': 'news.ycombinator.com', 'category': 'technology'},
+                {'domain': 'reddit.com', 'category': 'social'},
+                {'domain': 'stackoverflow.com', 'category': 'technology'},
+                {'domain': 'medium.com', 'category': 'blogs'},
+                {'domain': 'twitter.com', 'category': 'social'},
+                {'domain': 'linkedin.com', 'category': 'business'},
+                {'domain': 'github.com', 'category': 'development'},
+                {'domain': 'youtube.com', 'category': 'streaming'},
+                {'domain': 'wikipedia.org', 'category': 'reference'},
+                {'domain': 'amazon.com', 'category': 'shopping'}
+            ]
+            
+            site = random.choice(junk_sites)
+            
+            return {
+                'timestamp': timestamp,
+                'user': user['email'],
+                'service': 'Internet',
+                'domain': site['domain'],
+                'action': 'allowed',
+                'category': site['category']
+            }
     
     def _format_leef(self, event: dict) -> str:
         """Format as LEEF."""

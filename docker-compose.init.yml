@@ -1,8 +1,6 @@
 # Docker Compose file for initialization only
 # Use this to initialize configuration before running the main docker-compose.yml
 
-version: '3.8'
-
 services:
   init:
     image: ghcr.io/skyhighsecurity/traffic-forge:latest

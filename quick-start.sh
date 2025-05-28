@@ -49,7 +49,6 @@ init_config() {
         echo "Creating docker-compose.init.yml..."
         cat > docker-compose.init.yml << 'EOF'
 # Docker Compose file for initialization only
-version: '3.8'
 
 services:
   init:

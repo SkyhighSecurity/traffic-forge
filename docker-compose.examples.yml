@@ -1,7 +1,5 @@
 # Example Docker Compose configurations for different use cases
 
-version: '3.8'
-
 services:
   # Example 1: Development/Testing Setup
   # Generates lower volume of traffic with debug logging
