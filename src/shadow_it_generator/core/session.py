@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import random
-import numpy as np
+from ..utils.numpy_compat import np  # Numpy compatibility layer
 
 from ..config.models import CloudService
 from ..formatters.base import LogEvent

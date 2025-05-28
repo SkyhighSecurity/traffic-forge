@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Set
 from datetime import datetime, time
 import random
-import numpy as np
+from ..utils.numpy_compat import np  # Numpy compatibility layer
 
 from ..config.models import UserProfile, CloudService
 

@@ -8,7 +8,7 @@ break times, and service usage habits.
 from datetime import datetime, time, timedelta
 from typing import List, Dict, Any, Tuple, Optional
 import random
-import numpy as np
+from ..utils.numpy_compat import np  # Numpy compatibility layer
 from dataclasses import dataclass
 
 

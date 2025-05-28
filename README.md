@@ -5,7 +5,7 @@ Generate realistic web gateway traffic logs for CASB (Cloud Access Security Brok
 ## Features
 
 - Generate realistic web gateway logs in LEEF and CEF formats
-- 499 pre-configured cloud service definitions
+- 500 pre-configured cloud service definitions
 - Configurable enterprise settings and user behavior profiles
 - Real-time and batch generation modes
 - Docker support with volume-based configuration

@@ -8,7 +8,7 @@ based on service characteristics and user behavior.
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 import random
-import numpy as np
+from ..utils.numpy_compat import np  # Numpy compatibility layer
 
 
 @dataclass

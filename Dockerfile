@@ -1,7 +1,7 @@
 # Skyhigh Traffic Forge - Docker Image
 # Generates realistic web gateway traffic logs for CASB demonstrations
 
-FROM python:3.11-slim
+FROM python:3.11
 
 LABEL maintainer="Skyhigh Security"
 LABEL description="Skyhigh Traffic Forge - Web Gateway Traffic Simulator for CASB Demos"

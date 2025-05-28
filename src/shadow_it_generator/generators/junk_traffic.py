@@ -10,7 +10,7 @@ import random
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
 from datetime import datetime
-import numpy as np
+from ..utils.numpy_compat import np  # Numpy compatibility layer
 
 from ..formatters.base import LogEvent
 from ..utils.ip_generator import IPGenerator

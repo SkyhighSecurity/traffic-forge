@@ -7,8 +7,13 @@ Handles working hours, weekends, holidays, and time-based activity patterns.
 from datetime import datetime, time, timedelta
 from typing import List, Tuple, Optional
 import random
-import numpy as np
-from zoneinfo import ZoneInfo
+from .numpy_compat import np  # Numpy compatibility layer
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from datetime import timezone
+    # Simple fallback for Python < 3.9
+    ZoneInfo = lambda tz: timezone.utc  # Simplified for testing
 
 
 def is_working_hours(
