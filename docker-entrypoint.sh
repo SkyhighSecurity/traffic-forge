@@ -9,10 +9,14 @@ OUTPUT_DIR="${SKYHIGH_OUTPUT_DIR:-/var/log/skyhigh-traffic-forge}"
 # Ensure output directory exists (for volume mounts)
 mkdir -p "$OUTPUT_DIR"
 
+# Get version from Python package
+VERSION=$(skyhigh-traffic-forge --version 2>/dev/null | cut -d' ' -f2 || echo "unknown")
+
 # Check if this is the first run (no config exists)
 if [ ! -f "$CONFIG_DIR/enterprise.yaml" ]; then
     echo "=========================================="
-    echo "Skyhigh Traffic Forge - First Run Setup"
+    echo "Skyhigh Traffic Forge v${VERSION}"
+    echo "First Run Setup"
     echo "=========================================="
     echo ""
     echo "No configuration found in $CONFIG_DIR"

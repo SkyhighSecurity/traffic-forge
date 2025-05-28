@@ -6,6 +6,8 @@ FROM python:3.11
 LABEL maintainer="Skyhigh Security"
 LABEL description="Skyhigh Traffic Forge - Web Gateway Traffic Simulator for CASB Demos"
 LABEL version="1.0.0"
+LABEL build-date="${BUILD_DATE}"
+LABEL vcs-ref="${VCS_REF}"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \

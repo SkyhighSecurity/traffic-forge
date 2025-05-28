@@ -1,15 +1,21 @@
 """Setup script for Shadow IT Log Generator."""
 
 from setuptools import setup, find_packages
+import os
+import sys
+
+# Add src to path to import version
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+from shadow_it_generator._version import __version__, __author__, __description__
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="skyhigh-traffic-forge",
-    version="1.0.0",
-    author="Skyhigh Security Team",
-    description="Generate realistic web gateway traffic logs for CASB testing and demonstrations",
+    version=__version__,
+    author=__author__,
+    description=__description__,
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/skyhighsecurity/traffic-forge",

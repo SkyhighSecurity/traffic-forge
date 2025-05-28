@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import logging
 
+from ._version import __version__, __description__, __author__
 from .config.initializer import ConfigInitializer
 from .generators.realtime import RealtimeGenerator
 from .generators.batch import BatchGenerator
@@ -108,6 +109,7 @@ def generate_command(args):
     
     print("Skyhigh Traffic Forge")
     print("=" * 50)
+    print(f"Version: {__version__}")
     print(f"Configuration: {config_dir}")
     print(f"Output: {output_dir}")
     print(f"Mode: {args.mode}")
@@ -209,7 +211,7 @@ def validate_command(args):
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Skyhigh Traffic Forge - Generate realistic web gateway traffic for CASB demos",
+        description=f"Skyhigh Traffic Forge v{__version__} - {__description__}",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -235,6 +237,12 @@ Docker Usage:
     -v /path/to/logs:/var/log/skyhigh-traffic-forge \\
     skyhigh-traffic-forge generate --mode realtime
 """
+    )
+    
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}"
     )
     
     parser.add_argument(
