@@ -26,8 +26,8 @@ class LEEFFormatter(LogFormatter):
         super().__init__(output_dir)
         self.vendor = "McAfee"
         self.product = "Web Gateway"
-        self.product_version = "8.2.9"
-        self.leef_version = "1.0"
+        self.product_version = "10.15.0.623"
+        self.leef_version = "2.0"
         self.current_file = None
         self.current_date = None
     
@@ -49,21 +49,9 @@ class LEEFFormatter(LogFormatter):
         """
         Determine the event ID based on the event type.
         
-        Event IDs for McAfee Web Gateway:
-        - 0: Allowed traffic
-        - 1: Blocked traffic
-        - 2: Authentication
-        - 3: Malware detected
-        - 4: DLP violation
+        For McAfee Web Gateway, using 302 for web traffic events.
         """
-        if event.action == "blocked":
-            return "1"
-        elif event.action == "denied":
-            return "1"
-        elif hasattr(event, 'event_type') and event.event_type == 'auth':
-            return "2"
-        else:
-            return "0"  # Allowed traffic
+        return "302"  # Web traffic event
     
     def format_event(self, event: LogEvent) -> str:
         """
@@ -76,62 +64,29 @@ class LEEFFormatter(LogFormatter):
             LEEF formatted string
         """
         # Build LEEF header
-        header = f"LEEF:{self.leef_version}|{self.vendor}|{self.product}|{self.product_version}|{self._get_event_id(event)}"
+        header = f"LEEF:{self.leef_version}|{self.vendor}|{self.product}|{self.product_version}|{self._get_event_id(event)}|"
         
-        # Convert timestamp to milliseconds since epoch
-        dev_time = int(event.timestamp.timestamp() * 1000)
+        # Format timestamp
+        dev_time = event.timestamp.strftime('%b %d %Y %H:%M:%S.%f')[:-3]
         
-        # Build key-value pairs
+        # Build key-value pairs for essential fields in tab-separated format
         fields = []
         
-        # Required LEEF fields
+        # Core fields in the expected order
         fields.append(f"devTime={dev_time}")
         fields.append(f"src={event.source_ip}")
         fields.append(f"dst={event.destination_ip}")
-        fields.append(f"srcPort={event.source_port}")
-        fields.append(f"dstPort={event.destination_port}")
-        
-        # User information
         fields.append(f"usrName={self._escape_value(event.username)}")
-        fields.append(f"domain={self._escape_value(event.user_domain)}")
-        
-        # Request information
-        fields.append(f"url={self._escape_value(event.url)}")
-        fields.append(f"method={event.method}")
-        fields.append(f"proto={event.protocol}")
-        fields.append(f"status={event.status_code}")
-        
-        # Traffic information
-        fields.append(f"bytesIn={event.bytes_received}")
-        fields.append(f"bytesOut={event.bytes_sent}")
-        fields.append(f"responseTime={event.duration_ms}")
-        
-        # User agent
-        fields.append(f"userAgent={self._escape_value(event.user_agent)}")
-        
-        # Category and risk
-        fields.append(f"category={self._escape_value(event.category)}")
-        fields.append(f"riskLevel={event.risk_level}")
-        
-        # Action taken
+        fields.append(f"request={self._escape_value(event.url)}")
         fields.append(f"action={event.action}")
+        fields.append(f"cat={self._escape_value(event.category)}")
         
-        # Service name if available
-        if event.service_name:
-            fields.append(f"application={self._escape_value(event.service_name)}")
+        # Optional fields that may be included
+        if event.service_name and event.service_name != 'Internet':
+            fields.append(f"app={self._escape_value(event.service_name)}")
         
-        # Referrer if available
-        if event.referrer:
-            fields.append(f"referrer={self._escape_value(event.referrer)}")
-        
-        # Additional fields if provided
-        if event.additional_fields:
-            for key, value in event.additional_fields.items():
-                # Convert camelCase to LEEF style (camelCase is ok in LEEF)
-                fields.append(f"{key}={self._escape_value(str(value))}")
-        
-        # Combine header and fields
-        leef_line = header + "|" + "|".join(fields)
+        # Combine header and fields with tab separator
+        leef_line = header + '\t'.join(fields)
         
         return leef_line
     

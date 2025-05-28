@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 import random
 import yaml
 from ..utils.user_generator import UserGenerator
+from ..utils.ip_generator import IPGenerator
+from ..formatters.base import LogEvent
+from ..formatters.leef import LEEFFormatter
 
 
 class BatchGenerator:
@@ -23,9 +26,25 @@ class BatchGenerator:
         cache_file = config_dir / "users.json"
         self.user_generator = UserGenerator(domain, cache_file=cache_file)
         
+        # Initialize IP generator
+        network_config = self.config.get('network', {})
+        self.ip_generator = IPGenerator(
+            internal_subnets=network_config.get('internal_subnets', ['10.0.0.0/8']),
+            egress_ips=network_config.get('egress_ips', ['203.0.113.1']),
+            proxy_ips=network_config.get('proxy_ips', []),
+            vpn_subnets=network_config.get('vpn_subnets', [])
+        )
+        
+        # Initialize LEEF formatter
+        self.leef_formatter = LEEFFormatter(output_dir)
+        
         # Generate users from cache
         user_count = self.config['enterprise'].get('total_users', 5000)
         self.users = self.user_generator.generate_users(user_count)
+        
+        # Assign IP addresses to users
+        for user in self.users:
+            user['ip_address'] = self.ip_generator.generate_internal_ip()
         
         # Load some services
         self.services = []
@@ -57,10 +76,8 @@ class BatchGenerator:
                     event_time = current_time + timedelta(seconds=random.randint(0, 300))
                     event = self._generate_event(event_time)
                     
-                    if format == "leef":
-                        line = self._format_leef(event)
-                    else:
-                        line = self._format_cef(event)
+                    # Use the LEEF formatter
+                    line = self.leef_formatter.format_event(event)
                     
                     f.write(line + '\n')
                     event_count += 1
@@ -76,43 +93,60 @@ class BatchGenerator:
         print(f"Generated {event_count} events")
         return output_file
     
-    def _generate_event(self, timestamp: datetime) -> dict:
+    def _generate_event(self, timestamp: datetime) -> LogEvent:
         """Generate a random event."""
         service = random.choice(self.services)
         user = random.choice(self.users)
         
-        return {
-            'timestamp': timestamp,
-            'user': user['email'],
-            'service': service['service']['name'],
-            'domain': service['network']['domains'][0].replace('*.', ''),
-            'action': 'blocked' if random.random() < 0.1 else 'allowed',
-            'category': service['service']['category'],
-            'bytes': random.randint(1000, 100000)
-        }
-    
-    def _format_leef(self, event: dict) -> str:
-        """Format as LEEF."""
-        header = "LEEF:2.0|McAfee|Web Gateway|10.15.0.623|302|"
-        fields = {
-            'devTime': event['timestamp'].strftime('%b %d %Y %H:%M:%S'),
-            'usrName': event['user'],
-            'request': f"https://{event['domain']}/",
-            'action': event['action'],
-            'cat': event['category'],
-            'bytesIn': event['bytes']
-        }
-        return header + '\t'.join([f"{k}={v}" for k, v in fields.items()])
-    
-    def _format_cef(self, event: dict) -> str:
-        """Format as CEF."""
-        header = f"CEF:0|McAfee|Web Gateway|10.15.0.623|proxy|{event['action']}|1|"
-        fields = {
-            'rt': str(int(event['timestamp'].timestamp() * 1000)),
-            'suser': event['user'],
-            'request': f"https://{event['domain']}/",
-            'act': event['action'],
-            'cat': event['category'],
-            'in': event['bytes']
-        }
-        return header + ' '.join([f"{k}={v}" for k, v in fields.items()])
+        # Common user agent strings
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+        ]
+        
+        domain = random.choice(service['network']['domains']).replace('*.', '')
+        action = 'blocked' if service['service']['status'] == 'blocked' else 'allowed'
+        
+        # Get destination IP from service ranges or generate CDN IP
+        service_ip_ranges = service['network'].get('ip_ranges', [])
+        dest_ip = self.ip_generator.generate_destination_ip(service_ip_ranges)
+        
+        # Generate request details
+        methods = ['GET'] * 85 + ['POST'] * 10 + ['PUT'] * 3 + ['DELETE'] * 2
+        method = random.choice(methods)
+        
+        # Generate bytes transferred
+        if method == 'GET':
+            bytes_sent = random.randint(200, 2000)
+            bytes_received = random.randint(1000, 100000)
+        else:
+            bytes_sent = random.randint(1000, 50000)
+            bytes_received = random.randint(200, 5000)
+        
+        # Response time in milliseconds
+        duration_ms = random.randint(50, 2000)
+        
+        return LogEvent(
+            timestamp=timestamp,
+            source_ip=user['ip_address'],
+            destination_ip=dest_ip,
+            source_port=self.ip_generator.generate_source_port(),
+            destination_port=self.ip_generator.get_destination_port('https'),
+            username=user['email'],
+            user_domain=self.config['enterprise']['domain'],
+            url=f"https://{domain}/",
+            method=method,
+            status_code=200 if action == 'allowed' else 403,
+            bytes_sent=bytes_sent,
+            bytes_received=bytes_received,
+            duration_ms=duration_ms,
+            user_agent=random.choice(user_agents),
+            referrer=None,
+            action=action,
+            category=service['service']['category'],
+            risk_level=service['service'].get('risk_level', 'low'),
+            service_name=service['service']['name'],
+            protocol='https'
+        )

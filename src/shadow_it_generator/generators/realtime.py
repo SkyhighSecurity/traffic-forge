@@ -8,6 +8,9 @@ import random
 import yaml
 import json
 from ..utils.user_generator import UserGenerator
+from ..utils.ip_generator import IPGenerator
+from ..formatters.base import LogEvent
+from ..formatters.leef import LEEFFormatter
 
 
 class RealtimeGenerator:
@@ -28,9 +31,25 @@ class RealtimeGenerator:
         cache_file = config_dir / "users.json"
         self.user_generator = UserGenerator(domain, cache_file=cache_file)
         
+        # Initialize IP generator
+        network_config = self.config.get('network', {})
+        self.ip_generator = IPGenerator(
+            internal_subnets=network_config.get('internal_subnets', ['10.0.0.0/8']),
+            egress_ips=network_config.get('egress_ips', ['203.0.113.1']),
+            proxy_ips=network_config.get('proxy_ips', []),
+            vpn_subnets=network_config.get('vpn_subnets', [])
+        )
+        
+        # Initialize LEEF formatter
+        self.leef_formatter = LEEFFormatter(output_dir)
+        
         # Generate a pool of users matching enterprise configuration
         user_count = self.config['enterprise'].get('total_users', 5000)
         self.users = self.user_generator.generate_users(user_count)
+        
+        # Assign IP addresses to users
+        for user in self.users:
+            user['ip_address'] = self.ip_generator.generate_internal_ip()
         
         # For performance in realtime mode, create an active user subset
         # This represents users who are currently active (e.g., during business hours)
@@ -123,10 +142,10 @@ class RealtimeGenerator:
                 
                 for _ in range(events_per_cycle):
                     event = self._generate_event(timestamp)
-                    leef_line = self._format_leef(event)
+                    leef_line = self.leef_formatter.format_event(event)
                     
                     if display_mode in ["console", "both"]:
-                        print(f"[{timestamp.strftime('%H:%M:%S')}] {event['user']} -> {event['service']}")
+                        print(f"[{timestamp.strftime('%H:%M:%S')}] {event.username} -> {event.service_name} ({event.source_ip})")
                     
                     if display_mode in ["file", "both"]:
                         f.write(leef_line + '\n')
@@ -162,11 +181,19 @@ class RealtimeGenerator:
         self.active_users = continuing_users + new_users
         print(f"\n[Shift Change] Rotated active users: {keep_count} continuing, {len(new_users)} new\n")
     
-    def _generate_event(self, timestamp: datetime) -> dict:
+    def _generate_event(self, timestamp: datetime) -> LogEvent:
         """Generate a random event."""
         # Select a user from the active users
         # This ensures we're reusing the same pool of users throughout the session
         user = random.choice(self.active_users)
+        
+        # Common user agent strings
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+        ]
         
         # Decide type of traffic (70% cloud services, 30% junk/internet)
         if random.random() < 0.7 and self.services:
@@ -184,15 +211,13 @@ class RealtimeGenerator:
             
             domain = random.choice(service['network']['domains']).replace('*.', '')
             action = 'blocked' if service['service']['status'] == 'blocked' else 'allowed'
+            category = service['service']['category']
+            service_name = service['service']['name']
+            risk_level = service['service'].get('risk_level', 'low')
             
-            return {
-                'timestamp': timestamp,
-                'user': user['email'],
-                'service': service['service']['name'],
-                'domain': domain,
-                'action': action,
-                'category': service['service']['category']
-            }
+            # Get destination IP from service ranges or generate CDN IP
+            service_ip_ranges = service['network'].get('ip_ranges', [])
+            dest_ip = self.ip_generator.generate_destination_ip(service_ip_ranges)
         else:
             # Junk/internet traffic
             junk_sites = [
@@ -209,24 +234,49 @@ class RealtimeGenerator:
             ]
             
             site = random.choice(junk_sites)
-            
-            return {
-                'timestamp': timestamp,
-                'user': user['email'],
-                'service': 'Internet',
-                'domain': site['domain'],
-                'action': 'allowed',
-                'category': site['category']
-            }
+            domain = site['domain']
+            action = 'allowed'
+            category = site['category']
+            service_name = 'Internet'
+            risk_level = 'low'
+            dest_ip = self.ip_generator.generate_destination_ip()
+        
+        # Generate request details
+        methods = ['GET'] * 85 + ['POST'] * 10 + ['PUT'] * 3 + ['DELETE'] * 2
+        method = random.choice(methods)
+        
+        # Generate bytes transferred (varies by method and category)
+        if method == 'GET':
+            bytes_sent = random.randint(200, 2000)
+            bytes_received = random.randint(1000, 100000)
+        else:
+            bytes_sent = random.randint(1000, 50000)
+            bytes_received = random.randint(200, 5000)
+        
+        # Response time in milliseconds
+        duration_ms = random.randint(50, 2000)
+        
+        # Create LogEvent object
+        return LogEvent(
+            timestamp=timestamp,
+            source_ip=user['ip_address'],
+            destination_ip=dest_ip,
+            source_port=self.ip_generator.generate_source_port(),
+            destination_port=self.ip_generator.get_destination_port('https'),
+            username=user['email'],
+            user_domain=self.config['enterprise']['domain'],
+            url=f"https://{domain}/",
+            method=method,
+            status_code=200 if action == 'allowed' else 403,
+            bytes_sent=bytes_sent,
+            bytes_received=bytes_received,
+            duration_ms=duration_ms,
+            user_agent=random.choice(user_agents),
+            referrer=None,
+            action=action,
+            category=category,
+            risk_level=risk_level,
+            service_name=service_name,
+            protocol='https'
+        )
     
-    def _format_leef(self, event: dict) -> str:
-        """Format as LEEF."""
-        header = "LEEF:2.0|McAfee|Web Gateway|10.15.0.623|302|"
-        fields = {
-            'devTime': event['timestamp'].strftime('%b %d %Y %H:%M:%S.%f')[:-3],
-            'usrName': event['user'],
-            'request': f"https://{event['domain']}/",
-            'action': event['action'],
-            'cat': event['category']
-        }
-        return header + '\t'.join([f"{k}={v}" for k, v in fields.items()])
