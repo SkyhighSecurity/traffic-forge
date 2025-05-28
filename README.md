@@ -18,13 +18,13 @@ Generate realistic web gateway traffic logs for CASB (Cloud Access Security Brok
 
 1. **Download and initialize**:
    ```bash
-   # Download required files
+   # Download docker-compose.yml
    curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/docker-compose.yml
-   curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/quick-start.sh
-   chmod +x quick-start.sh
    
    # Initialize configuration
-   ./quick-start.sh init
+   mkdir -p config && \
+   docker run --rm -v $(pwd)/config:/etc/skyhigh-traffic-forge \
+     ghcr.io/skyhighsecurity/traffic-forge:latest init
    ```
 
 2. **Configure your organization**:
@@ -35,24 +35,32 @@ Generate realistic web gateway traffic logs for CASB (Cloud Access Security Brok
 
 3. **Start generating logs**:
    ```bash
-   ./quick-start.sh start
+   # Start the generator
+   docker compose up -d
    
    # View logs
-   ./quick-start.sh logs
+   docker compose logs -f
    
-   # Check status
-   ./quick-start.sh status
+   # Stop the generator
+   docker compose down
    ```
 
-### Alternative: One-liner Setup
+### Using the Quick-Start Script (Optional)
 
-If you prefer, you can initialize with a single Docker command:
+For convenience, you can also use the quick-start script:
 ```bash
-# Create config directory and initialize
-mkdir -p config && \
-docker run --rm -v $(pwd)/config:/etc/skyhigh-traffic-forge \
-  ghcr.io/skyhighsecurity/traffic-forge:latest init
+# Download the script
+curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/quick-start.sh
+chmod +x quick-start.sh
+
+# Commands available
+./quick-start.sh init    # Initialize configuration
+./quick-start.sh start   # Start generator
+./quick-start.sh stop    # Stop generator
+./quick-start.sh logs    # View logs
+./quick-start.sh status  # Check status
 ```
+
 
 ### Using Docker (Manual)
 
