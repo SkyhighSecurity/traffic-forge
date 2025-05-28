@@ -40,3 +40,24 @@ activity:
       avg_per_hour: 10
 security_events:
   block_rate: 0.001
+traffic_override:
+  access_count_per_hour:
+    normal:
+      mean: 8  # Sales team checks CRM periodically
+      std: 3
+    power_user:
+      mean: 20  # Sales managers and power users
+      std: 5
+    risky:
+      mean: 5
+      std: 2
+  bandwidth_per_user:
+    normal:
+      daily_mb: 150  # Mostly database queries and reports
+      peak_multiplier: 2.0
+    power_user:
+      daily_mb: 400  # Heavy reporting and data exports
+      peak_multiplier: 3.0
+    risky:
+      daily_mb: 100
+      peak_multiplier: 1.5

@@ -13,6 +13,7 @@ class CloudService:
         self.traffic_patterns = data.get("traffic_patterns", {})
         self.activity = data.get("activity", {})
         self.security_events = data.get("security_events", {})
+        self.traffic_override = data.get("traffic_override", {})
     
     @property
     def name(self) -> str:
@@ -48,3 +49,26 @@ class CloudService:
     def block_rate(self) -> float:
         """Get block rate."""
         return self.security_events.get("block_rate", 0.0)
+    
+    @property
+    def has_traffic_override(self) -> bool:
+        """Check if service has traffic override configuration."""
+        return bool(self.traffic_override)
+    
+    @property
+    def override_access_count(self) -> Optional[Dict[str, float]]:
+        """Get override access count per hour by user profile.
+        
+        Returns:
+            Dict with 'mean' and 'std' for access count, or None if not set.
+        """
+        return self.traffic_override.get("access_count_per_hour")
+    
+    @property
+    def override_bandwidth(self) -> Optional[Dict[str, Any]]:
+        """Get override bandwidth usage per user.
+        
+        Returns:
+            Dict with bandwidth configuration by profile, or None if not set.
+        """
+        return self.traffic_override.get("bandwidth_per_user")

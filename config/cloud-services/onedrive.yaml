@@ -50,3 +50,24 @@ activity:
       avg_duration_seconds: 20
 security_events:
   block_rate: 0.001
+traffic_override:
+  access_count_per_hour:
+    normal:
+      mean: 15  # Normal users sync/access files ~15 times per hour
+      std: 5
+    power_user:
+      mean: 30  # Power users work with files more frequently
+      std: 10
+    risky:
+      mean: 10
+      std: 5
+  bandwidth_per_user:
+    normal:
+      daily_mb: 1000  # ~1GB per day for file syncing
+      peak_multiplier: 4.0  # Large file uploads/downloads spike bandwidth
+    power_user:
+      daily_mb: 3000  # Power users sync more files
+      peak_multiplier: 5.0
+    risky:
+      daily_mb: 500
+      peak_multiplier: 3.0

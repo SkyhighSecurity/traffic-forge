@@ -212,6 +212,7 @@ Each service definition includes:
 - User adoption rates
 - Security event configurations
 - Activity simulation parameters
+- Traffic override configurations (optional)
 
 ## Log Formats
 
@@ -249,6 +250,46 @@ skyhigh-traffic-forge/
 1. Create a YAML file in `config/cloud-services/`
 2. Follow the existing service definition format
 3. Rebuild and reinitialize configuration
+
+### Traffic Override Configuration
+
+For core services that all users access heavily (like Microsoft 365, OneDrive, Slack), you can use traffic overrides to specify exact access patterns instead of relying on weighted random selection:
+
+```yaml
+traffic_override:
+  access_count_per_hour:
+    normal:
+      mean: 25    # Average accesses per hour
+      std: 5      # Standard deviation
+    power_user:
+      mean: 40
+      std: 10
+    risky:
+      mean: 20
+      std: 8
+  bandwidth_per_user:
+    normal:
+      daily_mb: 500           # Daily bandwidth usage
+      peak_multiplier: 2.5    # Peak hour multiplier
+    power_user:
+      daily_mb: 1500
+      peak_multiplier: 3.0
+    risky:
+      daily_mb: 300
+      peak_multiplier: 2.0
+```
+
+Services with traffic overrides will:
+- Always be accessed by assigned users (not subject to random selection)
+- Generate the specified number of accesses per hour based on user profile
+- Use defined bandwidth patterns for realistic traffic volume
+
+Core services with pre-configured overrides:
+- **Microsoft 365**: Heavy usage throughout the workday (25-40 accesses/hour)
+- **OneDrive**: File sync and storage patterns (15-30 accesses/hour)
+- **Slack**: Continuous messaging activity (30-50 accesses/hour)
+- **Google Workspace**: Email and collaboration (20-35 accesses/hour)
+- **Salesforce**: Periodic CRM access (8-20 accesses/hour)
 
 ## Documentation
 

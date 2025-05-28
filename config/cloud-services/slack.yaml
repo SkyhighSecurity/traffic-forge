@@ -51,3 +51,24 @@ activity:
       avg_size_mb: 5
 security_events:
   block_rate: 0.001
+traffic_override:
+  access_count_per_hour:
+    normal:
+      mean: 30  # Check Slack frequently throughout the day
+      std: 10
+    power_user:
+      mean: 50  # Power users are very active on Slack
+      std: 15
+    risky:
+      mean: 20
+      std: 10
+  bandwidth_per_user:
+    normal:
+      daily_mb: 200  # Mostly text, some file sharing
+      peak_multiplier: 2.0
+    power_user:
+      daily_mb: 500  # More file sharing, screen sharing
+      peak_multiplier: 3.0
+    risky:
+      daily_mb: 150
+      peak_multiplier: 2.0

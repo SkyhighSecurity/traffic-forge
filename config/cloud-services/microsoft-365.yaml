@@ -53,3 +53,24 @@ activity:
       avg_per_hour: 10
 security_events:
   block_rate: 0.001
+traffic_override:
+  access_count_per_hour:
+    normal:
+      mean: 25  # Normal users access Office 365 ~25 times per hour during work
+      std: 5
+    power_user:
+      mean: 40  # Power users access more frequently
+      std: 10
+    risky:
+      mean: 20  # Risky users might use it less
+      std: 8
+  bandwidth_per_user:
+    normal:
+      daily_mb: 500  # ~500MB per day for normal users
+      peak_multiplier: 2.5
+    power_user:
+      daily_mb: 1500  # Power users use more bandwidth
+      peak_multiplier: 3.0
+    risky:
+      daily_mb: 300
+      peak_multiplier: 2.0

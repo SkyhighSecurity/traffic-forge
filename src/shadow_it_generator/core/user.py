@@ -175,12 +175,13 @@ class User:
         """Determine if user should use mobile device for this session."""
         return random.random() < self.mobile_probability
     
-    def get_services_for_hour(self, current_time: datetime) -> List[str]:
+    def get_services_for_hour(self, current_time: datetime, service_map: Optional[Dict[str, CloudService]] = None) -> List[str]:
         """
         Get the services this user is likely to use in the current hour.
         
         Args:
             current_time: Current timestamp
+            service_map: Optional mapping of service names to CloudService objects
             
         Returns:
             List of service names to use
@@ -190,42 +191,77 @@ class User:
         if activity_level < 0.1:
             return []  # No activity
         
-        # Determine number of services to use this hour
-        if self.profile.name == "normal":
-            mean_services = 2
-            std_dev = 1
-        elif self.profile.name == "power_user":
-            mean_services = 5
-            std_dev = 2
-        else:  # risky
-            mean_services = 4
-            std_dev = 3
+        # Separate services with traffic overrides from regular services
+        override_services = []
+        regular_services = []
         
-        # Scale by activity level
-        num_services = int(max(0, np.random.normal(
-            mean_services * activity_level,
-            std_dev
-        )))
+        if service_map:
+            for service_name in self.assigned_services:
+                service = service_map.get(service_name)
+                if service and service.has_traffic_override:
+                    override_services.append(service_name)
+                else:
+                    regular_services.append(service_name)
+        else:
+            regular_services = list(self.assigned_services)
         
-        if num_services == 0:
-            return []
+        selected = []
         
-        # Select services based on weights
-        services = list(self.assigned_services)
-        if not services:
-            return []
+        # First, handle services with traffic overrides
+        for service_name in override_services:
+            service = service_map[service_name]
+            override_config = service.override_access_count
+            
+            if override_config:
+                # Get profile-specific config or default
+                profile_config = override_config.get(self.profile.name, override_config.get('default', {}))
+                
+                if profile_config:
+                    mean = profile_config.get('mean', 0)
+                    std = profile_config.get('std', 0)
+                    
+                    # Generate access count for this hour
+                    access_count = max(0, np.random.normal(mean, std))
+                    
+                    # Scale by activity level
+                    access_count = int(access_count * activity_level)
+                    
+                    if access_count > 0:
+                        selected.append(service_name)
         
-        # Weight selection by adoption weights
-        weights = [self.service_adoption_weights.get(s, 0.5) for s in services]
-        
-        # Don't select more services than available
-        num_services = min(num_services, len(services))
-        
-        selected = np.random.choice(
-            services,
-            size=num_services,
-            replace=False,
-            p=np.array(weights) / sum(weights)
-        )
+        # Then handle regular services with the original logic
+        if regular_services:
+            # Determine number of services to use this hour
+            if self.profile.name == "normal":
+                mean_services = 2
+                std_dev = 1
+            elif self.profile.name == "power_user":
+                mean_services = 5
+                std_dev = 2
+            else:  # risky
+                mean_services = 4
+                std_dev = 3
+            
+            # Scale by activity level
+            num_services = int(max(0, np.random.normal(
+                mean_services * activity_level,
+                std_dev
+            )))
+            
+            if num_services > 0:
+                # Weight selection by adoption weights
+                weights = [self.service_adoption_weights.get(s, 0.5) for s in regular_services]
+                
+                # Don't select more services than available
+                num_services = min(num_services, len(regular_services))
+                
+                regular_selected = np.random.choice(
+                    regular_services,
+                    size=num_services,
+                    replace=False,
+                    p=np.array(weights) / sum(weights)
+                )
+                
+                selected.extend(regular_selected)
         
         return list(selected)

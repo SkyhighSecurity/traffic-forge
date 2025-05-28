@@ -95,7 +95,7 @@ class ActivityGenerator:
             return sessions  # No activity
         
         # Determine which services to use
-        services_to_use = user.get_services_for_hour(start_time)
+        services_to_use = user.get_services_for_hour(start_time, self.service_map)
         
         if not services_to_use:
             return sessions

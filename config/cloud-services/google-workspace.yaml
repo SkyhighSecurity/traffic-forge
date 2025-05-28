@@ -49,3 +49,24 @@ activity:
       avg_per_hour: 10
 security_events:
   block_rate: 0.001
+traffic_override:
+  access_count_per_hour:
+    normal:
+      mean: 20  # Gmail, Docs, Drive access throughout the day
+      std: 5
+    power_user:
+      mean: 35  # Heavy collaboration users
+      std: 10
+    risky:
+      mean: 15
+      std: 5
+  bandwidth_per_user:
+    normal:
+      daily_mb: 400  # Email, docs, some file storage
+      peak_multiplier: 2.5
+    power_user:
+      daily_mb: 1200  # Heavy Google Drive usage
+      peak_multiplier: 3.5
+    risky:
+      daily_mb: 250
+      peak_multiplier: 2.0

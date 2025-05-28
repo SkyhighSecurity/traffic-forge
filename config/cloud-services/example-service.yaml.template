@@ -1,0 +1,114 @@
+# Example Cloud Service Configuration Template
+# This file shows all available configuration options for defining a cloud service
+
+# Service metadata and classification
+service:
+  name: Example Service         # Display name of the service
+  category: productivity        # Category: productivity, collaboration, cloud_storage, crm, etc.
+  status: sanctioned           # Status: sanctioned, unsanctioned, blocked
+  risk_level: low              # Risk level: low, medium, high, critical
+
+# Network configuration
+network:
+  domains:                     # List of domains used by the service
+    - example.com
+    - '*.example.com'          # Wildcards supported
+    - api.example.com
+    - cdn.example.com
+  ip_ranges:                   # Optional: IP ranges for the service
+    - 192.168.0.0/16
+    - 10.0.0.0/8
+
+# Traffic patterns define how the service is accessed
+traffic_patterns:
+  web_paths:                   # Common URL paths
+    - /dashboard
+    - /login
+    - /api/v1
+    - /files
+  user_agents:                 # User agent strings by device type
+    desktop:
+      - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+      - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
+    mobile:
+      - Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) Mobile/15E148
+  api_endpoints:               # API endpoints for programmatic access
+    - /api/v1/auth
+    - /api/v1/users
+    - /api/v1/data
+
+# Activity configuration
+activity:
+  user_adoption_rate: 0.5      # Percentage of users who use this service (0.0 to 1.0)
+  actions:                     # Different types of actions users can perform
+    page_view:
+      weight: 0.3              # Relative weight of this action
+      avg_duration_seconds: 30 # Average time spent
+    api_call:
+      weight: 0.2
+      avg_per_hour: 10         # Average API calls per hour
+    file_upload:
+      weight: 0.1
+      avg_size_mb: 5           # Average file size
+      size_std_dev: 2          # Standard deviation for file size
+    file_download:
+      weight: 0.2
+      avg_size_mb: 8
+      size_std_dev: 4
+    data_export:
+      weight: 0.2
+      avg_size_mb: 50
+      frequency: daily         # Frequency: hourly, daily, weekly
+
+# Security event configuration
+security_events:
+  block_rate: 0.01             # Percentage of requests that get blocked (0.0 to 1.0)
+  dlp_violation_rate: 0.001    # Data loss prevention violation rate
+  malware_detection_rate: 0.0001
+  authentication_failure_rate: 0.05
+
+# Traffic override configuration (optional)
+# Use this for core services that should have predictable access patterns
+traffic_override:
+  # Access count per hour by user profile
+  access_count_per_hour:
+    normal:
+      mean: 10                 # Average accesses per hour
+      std: 3                   # Standard deviation
+    power_user:
+      mean: 25
+      std: 5
+    risky:
+      mean: 8
+      std: 4
+    # Can also specify a default for all profiles
+    default:
+      mean: 12
+      std: 4
+  
+  # Bandwidth usage patterns
+  bandwidth_per_user:
+    normal:
+      daily_mb: 200            # Total daily bandwidth in MB
+      peak_multiplier: 2.0     # Multiplier for peak hours
+    power_user:
+      daily_mb: 800
+      peak_multiplier: 3.0
+    risky:
+      daily_mb: 150
+      peak_multiplier: 1.5
+
+# Additional metadata (optional)
+metadata:
+  vendor: Example Corp
+  compliance:                  # Compliance certifications
+    - SOC2
+    - ISO27001
+    - GDPR
+  data_residency:             # Where data is stored
+    - US
+    - EU
+  integration_apis:           # Available integration points
+    - REST API
+    - GraphQL
+    - Webhooks
