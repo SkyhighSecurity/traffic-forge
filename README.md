@@ -217,14 +217,60 @@ Each service definition includes:
 ## Log Formats
 
 ### LEEF (Log Event Extended Format)
+
+LEEF format with all McAfee Web Gateway fields (tab-separated):
 ```
-LEEF:2.0|McAfee|Web Gateway|10.15.0.623|302|devTime=May 27 2025 18:04:00.000<TAB>src=10.1.2.3<TAB>dst=52.1.2.3<TAB>usrName=john.doe@acme.com<TAB>request=https://slack.com/api/messages<TAB>action=allowed<TAB>cat=collaboration
+LEEF:2.0|McAfee|Web Gateway|12.2.19|302|devTime=May 27 2025 18:04:00.000	src=10.1.2.3	dst=52.1.2.3	srcPort=45123	dstPort=443	usrName=john.doe@acme.com	domain=acme.com	request=https://slack.com/api/messages	method=GET	proto=https	status=200	action=allowed	cat=collaboration	riskLevel=low	bytesIn=45678	bytesOut=1234	responseTime=523	userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36	app=Slack
 ```
 
+**LEEF Fields:**
+- `devTime` - Event timestamp
+- `src` - Source IP address (internal user IP)
+- `dst` - Destination IP address (cloud service IP)
+- `srcPort` - Source port (ephemeral port)
+- `dstPort` - Destination port (typically 443 for HTTPS)
+- `usrName` - Username with email format
+- `domain` - User's domain
+- `request` - Full URL requested
+- `method` - HTTP method (GET, POST, etc.)
+- `proto` - Protocol (https/http)
+- `status` - HTTP status code
+- `action` - Action taken (allowed/blocked)
+- `cat` - Service category
+- `riskLevel` - Risk assessment (low/medium/high)
+- `bytesIn` - Bytes received
+- `bytesOut` - Bytes sent
+- `responseTime` - Response time in milliseconds
+- `userAgent` - Browser user agent string
+- `app` - Application/service name (optional)
+
 ### CEF (Common Event Format)
+
+CEF format with all fields (space-separated key=value pairs):
 ```
-CEF:0|McAfee|Web Gateway|10.15.0.623|proxy|allowed|1|rt=1716840240000 suser=john.doe@acme.com request=https://slack.com/api/messages act=allowed cat=collaboration
+CEF:0|McAfee|Web Gateway|12.2.19|100|Web request to Slack|1|rt=1716840240000 src=10.1.2.3 dst=52.1.2.3 spt=45123 dpt=443 suser=john.doe@acme.com sntdom=acme.com request=https://slack.com/api/messages requestMethod=GET app=HTTPS flexNumber1=200 flexNumber1Label=HTTPStatus in=45678 out=1234 cn1=523 cn1Label=ResponseTime requestClientApplication=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 cat=collaboration act=allowed flexString1=low flexString1Label=RiskLevel destinationServiceName=Slack
 ```
+
+**CEF Fields:**
+- `rt` - Receipt time (milliseconds since epoch)
+- `src` - Source IP address
+- `dst` - Destination IP address
+- `spt` - Source port
+- `dpt` - Destination port
+- `suser` - Source username
+- `sntdom` - Source NT domain
+- `request` - Request URL
+- `requestMethod` - HTTP method
+- `app` - Application protocol
+- `flexNumber1` - HTTP status code
+- `in` - Bytes in
+- `out` - Bytes out
+- `cn1` - Response time (custom number 1)
+- `requestClientApplication` - User agent
+- `cat` - Category
+- `act` - Action
+- `flexString1` - Risk level
+- `destinationServiceName` - Service name
 
 ## Development
 
