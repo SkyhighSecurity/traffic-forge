@@ -41,8 +41,8 @@ usage() {
 init_config() {
     echo "Initializing configuration..."
     
-    # Create config directory if it doesn't exist
-    mkdir -p ./config
+    # Create required directories if they don't exist
+    mkdir -p ./config ./logs
     
     # Check if docker-compose.init.yml exists, if not create it
     if [ ! -f ./docker-compose.init.yml ]; then

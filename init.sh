@@ -8,9 +8,9 @@ echo "Skyhigh Traffic Forge - Initialize"
 echo "======================================"
 echo ""
 
-# Create config directory
-echo "Creating config directory..."
-mkdir -p ./config
+# Create required directories
+echo "Creating required directories..."
+mkdir -p ./config ./logs
 
 # Run initialization using Docker directly
 echo "Initializing configuration..."

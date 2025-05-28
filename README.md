@@ -21,8 +21,10 @@ Generate realistic web gateway traffic logs for CASB (Cloud Access Security Brok
    # Download docker-compose.yml
    curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/docker-compose.yml
    
+   # Create required directories
+   mkdir -p config logs
+   
    # Initialize configuration
-   mkdir -p config && \
    docker run --rm -v $(pwd)/config:/etc/skyhigh-traffic-forge \
      ghcr.io/skyhighsecurity/traffic-forge:latest init
    ```

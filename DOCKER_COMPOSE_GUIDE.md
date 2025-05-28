@@ -17,6 +17,9 @@ curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/do
 curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/quick-start.sh
 chmod +x quick-start.sh
 
+# Create required directories
+mkdir -p config logs
+
 # Initialize
 ./quick-start.sh init
 ```
@@ -26,14 +29,19 @@ chmod +x quick-start.sh
 # Download docker-compose.yml
 curl -LO https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/docker-compose.yml
 
+# Create required directories
+mkdir -p config logs
+
 # Initialize the configuration (first time only)
 docker compose run --rm traffic-forge init
 ```
 
 ### Option 3: Direct Docker command
 ```bash
-# Create config directory and initialize
-mkdir -p config
+# Create required directories
+mkdir -p config logs
+
+# Initialize configuration
 docker run --rm -v $(pwd)/config:/etc/skyhigh-traffic-forge \
   ghcr.io/skyhighsecurity/traffic-forge:latest init
 ```
