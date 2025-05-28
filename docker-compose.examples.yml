@@ -1,0 +1,187 @@
+# Example Docker Compose configurations for different use cases
+
+version: '3.8'
+
+services:
+  # Example 1: Development/Testing Setup
+  # Generates lower volume of traffic with debug logging
+  traffic-forge-dev:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-dev
+    volumes:
+      - ./config-dev:/etc/skyhigh-traffic-forge
+      - ./logs-dev:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_LOG_LEVEL: "DEBUG"
+      SKYHIGH_USER_COUNT: "100"
+      SKYHIGH_EVENTS_PER_MINUTE: "1000"
+      SKYHIGH_LOG_FORMAT: "json"  # Easier to parse in dev
+    command: generate --mode realtime
+    profiles: ["dev"]
+
+  # Example 2: High-Volume Production
+  # Optimized for high throughput
+  traffic-forge-prod:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-prod
+    volumes:
+      - ./config-prod:/etc/skyhigh-traffic-forge:ro  # Read-only config
+      - ./logs-prod:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_LOG_LEVEL: "WARNING"
+      SKYHIGH_USER_COUNT: "50000"
+      SKYHIGH_EVENTS_PER_MINUTE: "100000"
+      SKYHIGH_WORKER_THREADS: "8"
+      SKYHIGH_BATCH_SIZE: "5000"
+      SKYHIGH_LOG_FORMAT: "splunk"
+    command: generate --mode realtime
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+    profiles: ["prod"]
+
+  # Example 3: Historical Data Generation
+  # Generate 1 year of historical data
+  traffic-forge-historical:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-historical
+    volumes:
+      - ./config:/etc/skyhigh-traffic-forge
+      - ./logs-historical:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_LOG_FORMAT: "cef"
+      SKYHIGH_WORKER_THREADS: "8"
+      SKYHIGH_BATCH_SIZE: "10000"
+    command: generate --mode batch --start-date 2023-01-01 --end-date 2023-12-31
+    profiles: ["historical"]
+
+  # Example 4: Integration with Splunk
+  traffic-forge-splunk:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-splunk
+    volumes:
+      - ./config:/etc/skyhigh-traffic-forge
+      - splunk-logs:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_LOG_FORMAT: "splunk"
+      SKYHIGH_OUTPUT_DIR: "/var/log/skyhigh-traffic-forge"
+    command: generate --mode realtime
+    networks:
+      - splunk-net
+    profiles: ["splunk"]
+
+  splunk-forwarder:
+    image: splunk/universalforwarder:latest
+    container_name: splunk-forwarder
+    environment:
+      SPLUNK_START_ARGS: --accept-license
+      SPLUNK_PASSWORD: "changeme123!"
+      SPLUNK_FORWARD_SERVER: "splunk-indexer:9997"
+    volumes:
+      - splunk-logs:/var/log/traffic:ro
+      - ./splunk-inputs.conf:/opt/splunkforwarder/etc/system/local/inputs.conf
+    networks:
+      - splunk-net
+    depends_on:
+      - traffic-forge-splunk
+    profiles: ["splunk"]
+
+  # Example 5: Integration with Elasticsearch
+  traffic-forge-elastic:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-elastic
+    volumes:
+      - ./config:/etc/skyhigh-traffic-forge
+      - elastic-logs:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_LOG_FORMAT: "json"
+    command: generate --mode realtime
+    networks:
+      - elastic-net
+    profiles: ["elastic"]
+
+  filebeat:
+    image: elastic/filebeat:8.11.0
+    container_name: filebeat
+    user: root
+    volumes:
+      - elastic-logs:/var/log/traffic:ro
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=elasticsearch:9200
+    networks:
+      - elastic-net
+    depends_on:
+      - traffic-forge-elastic
+    profiles: ["elastic"]
+
+  # Example 6: Multi-Region Simulation
+  traffic-forge-us-east:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-us-east
+    volumes:
+      - ./config-us-east:/etc/skyhigh-traffic-forge
+      - ./logs/us-east:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_REGION: "us-east-1"
+      SKYHIGH_TIMEZONE: "America/New_York"
+    command: generate --mode realtime
+    profiles: ["multi-region"]
+
+  traffic-forge-eu-west:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-eu-west
+    volumes:
+      - ./config-eu-west:/etc/skyhigh-traffic-forge
+      - ./logs/eu-west:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_REGION: "eu-west-1"
+      SKYHIGH_TIMEZONE: "Europe/London"
+    command: generate --mode realtime
+    profiles: ["multi-region"]
+
+  traffic-forge-ap-south:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-ap-south
+    volumes:
+      - ./config-ap-south:/etc/skyhigh-traffic-forge
+      - ./logs/ap-south:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_REGION: "ap-south-1"
+      SKYHIGH_TIMEZONE: "Asia/Singapore"
+    command: generate --mode realtime
+    profiles: ["multi-region"]
+
+  # Example 7: Compliance Testing Setup
+  # Generates specific patterns for compliance testing
+  traffic-forge-compliance:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: traffic-forge-compliance
+    volumes:
+      - ./config-compliance:/etc/skyhigh-traffic-forge
+      - ./logs-compliance:/var/log/skyhigh-traffic-forge
+    environment:
+      SKYHIGH_LOG_FORMAT: "cef"
+      SKYHIGH_INCLUDE_PII: "true"  # For testing DLP
+      SKYHIGH_INCLUDE_THREATS: "true"  # For security testing
+      SKYHIGH_COMPLIANCE_MODE: "true"
+    command: generate --mode batch --days 30
+    profiles: ["compliance"]
+
+# Networks
+networks:
+  splunk-net:
+    driver: bridge
+  elastic-net:
+    driver: bridge
+
+# Volumes
+volumes:
+  splunk-logs:
+    driver: local
+  elastic-logs:
+    driver: local

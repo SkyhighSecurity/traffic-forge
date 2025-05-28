@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  traffic-forge:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: skyhigh-traffic-forge
+    
+    # Volumes for configuration and log output
+    volumes:
+      # Configuration directory (required)
+      - ./config:/etc/skyhigh-traffic-forge
+      # Log output directory
+      - ./logs:/var/log/skyhigh-traffic-forge
+      # Optional: Custom data files
+      # - ./data:/usr/share/skyhigh-traffic-forge/data
+    
+    # Environment variables for configuration
+    environment:
+      # Log format: splunk (default), cef, leef, json
+      SKYHIGH_LOG_FORMAT: "splunk"
+      
+      # Output settings
+      SKYHIGH_OUTPUT_DIR: "/var/log/skyhigh-traffic-forge"
+      SKYHIGH_MAX_FILE_SIZE: "100MB"
+      SKYHIGH_ROTATE_INTERVAL: "1h"
+      
+      # Performance settings
+      SKYHIGH_WORKER_THREADS: "4"
+      SKYHIGH_BATCH_SIZE: "1000"
+      
+      # Logging verbosity: DEBUG, INFO, WARNING, ERROR
+      SKYHIGH_LOG_LEVEL: "INFO"
+      
+      # Optional: Override config file location
+      # SKYHIGH_CONFIG_FILE: "/etc/skyhigh-traffic-forge/custom.yaml"
+    
+    # Command to run (default: realtime mode)
+    command: generate --mode realtime
+    
+    # Alternative commands:
+    # Batch mode - generate historical data
+    # command: generate --mode batch --start-date 2024-01-01 --end-date 2024-01-31
+    
+    # Replay mode - replay at accelerated speed
+    # command: generate --mode replay --start-date 2024-01-01 --days 7 --speed 10
+    
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "test", "-f", "/var/log/skyhigh-traffic-forge/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Optional: Run as specific user (default: 1000)
+    # user: "1000:1000"
+    
+    # Optional: Add labels for organization
+    labels:
+      com.skyhighsecurity.product: "traffic-forge"
+      com.skyhighsecurity.version: "1.0.0"
+      com.skyhighsecurity.description: "Web Gateway Traffic Simulator"
+
+# Optional: Named volumes instead of bind mounts
+# volumes:
+#   config:
+#     driver: local
+#   logs:
+#     driver: local
+
+# Optional: Custom network
+# networks:
+#   default:
+#     name: traffic-forge-network

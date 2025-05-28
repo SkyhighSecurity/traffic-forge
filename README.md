@@ -14,7 +14,39 @@ Generate realistic web gateway traffic logs for CASB (Cloud Access Security Brok
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Using Docker Compose (Recommended)
+
+1. **Download and initialize**:
+   ```bash
+   # Download docker-compose.yml
+   curl -O https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/docker-compose.yml
+   
+   # Download quick-start script
+   curl -O https://raw.githubusercontent.com/skyhighsecurity/traffic-forge/main/quick-start.sh
+   chmod +x quick-start.sh
+   
+   # Initialize configuration
+   ./quick-start.sh init
+   ```
+
+2. **Configure your organization**:
+   ```bash
+   # Edit the configuration file
+   nano ./config/enterprise.yaml
+   ```
+
+3. **Start generating logs**:
+   ```bash
+   ./quick-start.sh start
+   
+   # View logs
+   ./quick-start.sh logs
+   
+   # Check status
+   ./quick-start.sh status
+   ```
+
+### Using Docker (Manual)
 
 1. **Initialize Configuration**
    ```bash
@@ -200,6 +232,35 @@ skyhigh-traffic-forge/
 2. Follow the existing service definition format
 3. Rebuild and reinitialize configuration
 
+## Documentation
+
+- [Docker Compose Guide](DOCKER_COMPOSE_GUIDE.md) - Detailed Docker Compose setup and usage
+- [Docker Examples](docker-compose.examples.yml) - Example configurations for various use cases
+
+## Docker Compose Files
+
+This project includes several Docker Compose configurations:
+
+- `docker-compose.yml` - Main configuration for running the traffic generator
+- `docker-compose.init.yml` - Initialization-only configuration
+- `docker-compose.examples.yml` - Example configurations for different scenarios:
+  - Development/testing setup
+  - High-volume production deployment
+  - Historical data generation
+  - SIEM integrations (Splunk, Elasticsearch)
+  - Multi-region simulation
+  - Compliance testing
+
+## Environment Variables
+
+See `.env.example` for all available environment variables. Key variables include:
+
+- `SKYHIGH_LOG_FORMAT` - Output format (splunk, cef, leef, json)
+- `SKYHIGH_USER_COUNT` - Number of simulated users
+- `SKYHIGH_EVENTS_PER_MINUTE` - Target event generation rate
+- `SKYHIGH_WORKER_THREADS` - Number of worker threads
+- `SKYHIGH_LOG_LEVEL` - Logging verbosity (DEBUG, INFO, WARNING, ERROR)
+
 ## License
 
-MIT License - See LICENSE file for details# traffic-forge
+MIT License - See LICENSE file for details

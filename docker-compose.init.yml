@@ -1,0 +1,22 @@
+# Docker Compose file for initialization only
+# Use this to initialize configuration before running the main docker-compose.yml
+
+version: '3.8'
+
+services:
+  init:
+    image: ghcr.io/skyhighsecurity/traffic-forge:latest
+    container_name: skyhigh-traffic-forge-init
+    
+    # Mount config directory for initialization
+    volumes:
+      - ./config:/etc/skyhigh-traffic-forge
+    
+    # Run init command
+    command: init
+    
+    # Exit after completion
+    restart: "no"
+    
+    # Run as current user to avoid permission issues
+    user: "${UID:-1000}:${GID:-1000}"
