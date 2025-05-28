@@ -1,0 +1,17 @@
+# Include configuration and data files
+recursive-include config *.yaml *.yaml.example
+recursive-include data *.json
+include requirements.txt
+include README.md
+include LICENSE
+
+# Exclude unnecessary files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.log
+exclude .dockerignore
+exclude .gitignore
+exclude Dockerfile
+exclude docker-entrypoint.sh
+exclude build.sh
