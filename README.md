@@ -73,7 +73,7 @@ chmod +x quick-start.sh
    
    # Initialize with default configuration
    docker run -v ~/shadow-it-config:/etc/skyhigh-traffic-forge \
-     skyhigh-traffic-forge init
+     ghcr.io/skyhighsecurity/traffic-forge:latest init
    ```
 
 2. **Customize Configuration**
@@ -87,12 +87,12 @@ chmod +x quick-start.sh
    # Real-time generation
    docker run -v ~/shadow-it-config:/etc/skyhigh-traffic-forge \
      -v ~/shadow-it-logs:/var/log/skyhigh-traffic-forge \
-     skyhigh-traffic-forge generate --mode realtime
+     ghcr.io/skyhighsecurity/traffic-forge:latest generate --mode realtime
    
    # Batch generation for last 7 days
    docker run -v ~/shadow-it-config:/etc/skyhigh-traffic-forge \
      -v ~/shadow-it-logs:/var/log/skyhigh-traffic-forge \
-     skyhigh-traffic-forge generate --mode batch --duration 7d
+     ghcr.io/skyhighsecurity/traffic-forge:latest generate --mode batch --duration 7d
    ```
 
 ### Local Installation
@@ -160,7 +160,7 @@ Edit `enterprise.yaml` to customize:
 # Generate logs at 60x speed (1 hour = 1 minute)
 docker run -v ~/shadow-it-config:/etc/skyhigh-traffic-forge \
   -v ~/shadow-it-logs:/var/log/skyhigh-traffic-forge \
-  skyhigh-traffic-forge generate --mode realtime --speed 60
+  ghcr.io/skyhighsecurity/traffic-forge:latest generate --mode realtime --speed 60
 ```
 
 ### Batch Generation for Specific Period
@@ -169,7 +169,7 @@ docker run -v ~/shadow-it-config:/etc/skyhigh-traffic-forge \
 # Generate logs for the last 30 days
 docker run -v ~/shadow-it-config:/etc/skyhigh-traffic-forge \
   -v ~/shadow-it-logs:/var/log/skyhigh-traffic-forge \
-  skyhigh-traffic-forge generate --mode batch --duration 30d
+  ghcr.io/skyhighsecurity/traffic-forge:latest generate --mode batch --duration 30d
 ```
 
 ### Console Output Only (Testing)
@@ -177,7 +177,7 @@ docker run -v ~/shadow-it-config:/etc/skyhigh-traffic-forge \
 ```bash
 # Display logs in console without writing to file
 docker run -v ~/shadow-it-config:/etc/skyhigh-traffic-forge \
-  skyhigh-traffic-forge generate --mode realtime --display console
+  ghcr.io/skyhighsecurity/traffic-forge:latest generate --mode realtime --display console
 ```
 
 ## Command Line Options

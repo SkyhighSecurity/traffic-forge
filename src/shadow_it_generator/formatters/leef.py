@@ -104,7 +104,7 @@ class LEEFFormatter(LogFormatter):
             fields.append(f"referrer={self._escape_value(event.referrer)}")
         
         # Combine header and fields with tab separator
-        leef_line = header + '\t'.join(fields)
+        leef_line = header + '\t' + '\t'.join(fields)
         
         return leef_line
     
