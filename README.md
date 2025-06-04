@@ -220,7 +220,7 @@ Each service definition includes:
 
 LEEF format with all McAfee Web Gateway fields (tab-separated):
 ```
-LEEF:2.0|McAfee|Web Gateway|12.2.19|302|devTime=May 27 2025 18:04:00.000	src=10.1.2.3	dst=52.1.2.3	srcPort=45123	dstPort=443	usrName=john.doe@acme.com	domain=acme.com	request=https://slack.com/api/messages	method=GET	proto=https	status=200	action=allowed	cat=collaboration	riskLevel=low	bytesIn=45678	bytesOut=1234	responseTime=523	userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36	app=Slack
+LEEF:2.0|McAfee|Web Gateway|12.2.19|302|	devTime=May 27 2025 18:04:00.000	src=10.1.2.3	dst=52.1.2.3	srcPort=45123	dstPort=443	usrName=john.doe@acme.com	domain=acme.com	request=https://slack.com/api/messages	method=GET	proto=https	status=200	action=allowed	cat=collaboration	riskLevel=low	bytesIn=45678	bytesOut=1234	responseTime=523	userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36	app=Slack
 ```
 
 **LEEF Fields:**
