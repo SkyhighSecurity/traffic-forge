@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2025-01-06
+
+### Changed
+- Removed devTime field from LEEF formatter (replaced by separate date, time, and timestamp fields)
+- Removed rt field from CEF formatter (replaced by separate date, time, and timestamp fields)
+
+### Added
+- Dockerfile now dynamically reads version from VERSION file
+- Docker build script automatically tags images with version number
+- Docker entrypoint displays version from VERSION file
+
 ## [1.0.5] - 2025-01-06
 
 ### Added

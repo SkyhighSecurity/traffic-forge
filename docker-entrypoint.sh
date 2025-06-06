@@ -9,8 +9,12 @@ OUTPUT_DIR="${SKYHIGH_OUTPUT_DIR:-/var/log/skyhigh-traffic-forge}"
 # Ensure output directory exists (for volume mounts)
 mkdir -p "$OUTPUT_DIR"
 
-# Get version from Python package
-VERSION=$(skyhigh-traffic-forge --version 2>/dev/null | cut -d' ' -f2 || echo "unknown")
+# Get version from VERSION file or Python package
+if [ -f /app/VERSION ]; then
+    VERSION=$(cat /app/VERSION)
+else
+    VERSION=$(skyhigh-traffic-forge --version 2>/dev/null | cut -d' ' -f2 || echo "unknown")
+fi
 
 # Check if this is the first run (no config exists)
 if [ ! -f "$CONFIG_DIR/enterprise.yaml" ]; then

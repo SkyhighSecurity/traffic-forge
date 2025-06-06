@@ -1,13 +1,38 @@
 # Skyhigh Traffic Forge - Docker Image
 # Generates realistic web gateway traffic logs for CASB demonstrations
 
+FROM python:3.11 AS builder
+
+# Copy VERSION file to read the version
+COPY VERSION /VERSION
+
+# Export version for use in final stage
+RUN echo "APP_VERSION=$(cat /VERSION)" > /version.env
+
 FROM python:3.11
+
+# Copy version info from builder
+COPY --from=builder /version.env /version.env
+COPY VERSION /app/VERSION
+
+# Source version and display it
+RUN . /version.env && \
+    echo "Building Skyhigh Traffic Forge version: $APP_VERSION"
+
+# Build arguments for metadata
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Set version as environment variable for runtime
+ENV APP_VERSION_FILE=/app/VERSION
 
 LABEL maintainer="Skyhigh Security"
 LABEL description="Skyhigh Traffic Forge - Web Gateway Traffic Simulator for CASB Demos"
-LABEL version="1.0.0"
-LABEL build-date="${BUILD_DATE}"
-LABEL vcs-ref="${VCS_REF}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.title="Skyhigh Traffic Forge"
+LABEL org.opencontainers.image.description="Web Gateway Traffic Simulator for CASB Demos"
+LABEL org.opencontainers.image.vendor="Skyhigh Security"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -36,6 +61,7 @@ COPY config/ ./config/
 COPY data/ ./data/
 COPY setup.py .
 COPY README.md .
+COPY VERSION .
 
 # Install the package
 RUN pip install --no-cache-dir -e .

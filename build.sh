@@ -12,9 +12,28 @@ IMAGE_NAME="${IMAGE_NAME:-skyhigh-traffic-forge}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 REGISTRY="${REGISTRY:-}"
 
+# Read version from VERSION file
+if [ -f VERSION ]; then
+    VERSION=$(cat VERSION)
+    echo "Building version: ${VERSION}"
+    # Use version as tag if no tag specified
+    if [ "${IMAGE_TAG}" = "latest" ]; then
+        IMAGE_TAG="${VERSION}"
+    fi
+fi
+
+# Get build metadata
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+VCS_REF=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
 # Build the image
 echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
-docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
+docker build \
+    --build-arg BUILD_DATE="${BUILD_DATE}" \
+    --build-arg VCS_REF="${VCS_REF}" \
+    -t "${IMAGE_NAME}:${IMAGE_TAG}" \
+    -t "${IMAGE_NAME}:latest" \
+    .
 
 # Tag with registry if provided
 if [ -n "${REGISTRY}" ]; then

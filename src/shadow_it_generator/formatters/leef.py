@@ -70,13 +70,11 @@ class LEEFFormatter(LogFormatter):
         date = event.timestamp.strftime('%Y-%m-%d')
         time = event.timestamp.strftime('%H:%M:%S.%f')[:-3]
         unix_timestamp = int(event.timestamp.timestamp())
-        dev_time = event.timestamp.strftime('%b %d %Y %H:%M:%S.%f')[:-3]
         
         # Build key-value pairs for essential fields in tab-separated format
         fields = []
         
         # Core fields in the expected order
-        fields.append(f"devTime={dev_time}")
         fields.append(f"date={date}")
         fields.append(f"time={time}")
         fields.append(f"timestamp={unix_timestamp}")

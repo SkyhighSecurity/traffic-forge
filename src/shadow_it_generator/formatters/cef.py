@@ -146,7 +146,6 @@ class CEFFormatter(LogFormatter):
         extensions = []
         
         # Timestamp fields
-        extensions.append(f"rt={int(event.timestamp.timestamp() * 1000)}")
         extensions.append(f"deviceCustomDate1={event.timestamp.strftime('%Y-%m-%d')}")
         extensions.append(f"deviceCustomDate1Label=Date")
         extensions.append(f"deviceCustomString1={event.timestamp.strftime('%H:%M:%S.%f')[:-3]}")
