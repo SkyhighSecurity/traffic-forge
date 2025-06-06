@@ -220,11 +220,13 @@ Each service definition includes:
 
 LEEF format with all McAfee Web Gateway fields (tab-separated):
 ```
-LEEF:2.0|McAfee|Web Gateway|12.2.19|302|	devTime=May 27 2025 18:04:00.000	src=10.1.2.3	dst=52.1.2.3	srcPort=45123	dstPort=443	usrName=john.doe@acme.com	domain=acme.com	request=https://slack.com/api/messages	method=GET	proto=https	status=200	action=allowed	cat=collaboration	riskLevel=low	bytesIn=45678	bytesOut=1234	responseTime=523	userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36	app=Slack
+LEEF:2.0|McAfee|Web Gateway|12.2.19|302|	date=2025-05-27	time=18:04:00.000	timestamp=1748379840	src=10.1.2.3	dst=52.1.2.3	srcPort=45123	dstPort=443	usrName=john.doe@acme.com	domain=acme.com	request=https://slack.com/api/messages	method=GET	proto=https	status=200	action=allowed	cat=collaboration	riskLevel=low	bytesIn=45678	bytesOut=1234	responseTime=523	userAgent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36	app=Slack
 ```
 
 **LEEF Fields:**
-- `devTime` - Event timestamp
+- `date` - Event date (YYYY-MM-DD format)
+- `time` - Event time (HH:MM:SS.mmm format)
+- `timestamp` - Unix timestamp (seconds since epoch)
 - `src` - Source IP address (internal user IP)
 - `dst` - Destination IP address (cloud service IP)
 - `srcPort` - Source port (ephemeral port)
@@ -248,11 +250,13 @@ LEEF:2.0|McAfee|Web Gateway|12.2.19|302|	devTime=May 27 2025 18:04:00.000	src=10
 
 CEF format with all fields (space-separated key=value pairs):
 ```
-CEF:0|McAfee|Web Gateway|12.2.19|100|Web request to Slack|1|rt=1716840240000 src=10.1.2.3 dst=52.1.2.3 spt=45123 dpt=443 suser=john.doe@acme.com sntdom=acme.com request=https://slack.com/api/messages requestMethod=GET app=HTTPS flexNumber1=200 flexNumber1Label=HTTPStatus in=45678 out=1234 cn1=523 cn1Label=ResponseTime requestClientApplication=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 cat=collaboration act=allowed flexString1=low flexString1Label=RiskLevel destinationServiceName=Slack
+CEF:0|McAfee|Web Gateway|12.2.19|100|Web request to Slack|1|deviceCustomDate1=2025-05-27 deviceCustomDate1Label=Date deviceCustomString1=18:04:00.000 deviceCustomString1Label=Time deviceCustomNumber1=1748379840 deviceCustomNumber1Label=UnixTimestamp src=10.1.2.3 dst=52.1.2.3 spt=45123 dpt=443 suser=john.doe@acme.com sntdom=acme.com request=https://slack.com/api/messages requestMethod=GET app=HTTPS flexNumber1=200 flexNumber1Label=HTTPStatus in=45678 out=1234 cn1=523 cn1Label=ResponseTime requestClientApplication=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 cat=collaboration act=allowed flexString2=low flexString2Label=RiskLevel destinationServiceName=Slack
 ```
 
 **CEF Fields:**
-- `rt` - Receipt time (milliseconds since epoch)
+- `deviceCustomDate1` - Event date (YYYY-MM-DD format)
+- `deviceCustomString1` - Event time (HH:MM:SS.mmm format)
+- `deviceCustomNumber1` - Unix timestamp (seconds since epoch)
 - `src` - Source IP address
 - `dst` - Destination IP address
 - `spt` - Source port
@@ -269,7 +273,7 @@ CEF:0|McAfee|Web Gateway|12.2.19|100|Web request to Slack|1|rt=1716840240000 src
 - `requestClientApplication` - User agent
 - `cat` - Category
 - `act` - Action
-- `flexString1` - Risk level
+- `flexString2` - Risk level
 - `destinationServiceName` - Service name
 
 ## Development
