@@ -66,7 +66,10 @@ class LEEFFormatter(LogFormatter):
         # Build LEEF header
         header = f"LEEF:{self.leef_version}|{self.vendor}|{self.product}|{self.product_version}|{self._get_event_id(event)}|"
         
-        # Format timestamp
+        # Format timestamp components
+        date = event.timestamp.strftime('%Y-%m-%d')
+        time = event.timestamp.strftime('%H:%M:%S.%f')[:-3]
+        unix_timestamp = int(event.timestamp.timestamp())
         dev_time = event.timestamp.strftime('%b %d %Y %H:%M:%S.%f')[:-3]
         
         # Build key-value pairs for essential fields in tab-separated format
@@ -74,6 +77,9 @@ class LEEFFormatter(LogFormatter):
         
         # Core fields in the expected order
         fields.append(f"devTime={dev_time}")
+        fields.append(f"date={date}")
+        fields.append(f"time={time}")
+        fields.append(f"timestamp={unix_timestamp}")
         fields.append(f"src={event.source_ip}")
         fields.append(f"dst={event.destination_ip}")
         fields.append(f"srcPort={event.source_port}")

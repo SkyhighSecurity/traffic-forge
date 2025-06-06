@@ -145,8 +145,14 @@ class CEFFormatter(LogFormatter):
         # Build extension fields (key=value pairs)
         extensions = []
         
-        # Timestamp
+        # Timestamp fields
         extensions.append(f"rt={int(event.timestamp.timestamp() * 1000)}")
+        extensions.append(f"deviceCustomDate1={event.timestamp.strftime('%Y-%m-%d')}")
+        extensions.append(f"deviceCustomDate1Label=Date")
+        extensions.append(f"deviceCustomString1={event.timestamp.strftime('%H:%M:%S.%f')[:-3]}")
+        extensions.append(f"deviceCustomString1Label=Time")
+        extensions.append(f"deviceCustomNumber1={int(event.timestamp.timestamp())}")
+        extensions.append(f"deviceCustomNumber1Label=UnixTimestamp")
         
         # Source and destination
         extensions.append(f"src={event.source_ip}")
@@ -181,8 +187,8 @@ class CEFFormatter(LogFormatter):
         extensions.append(f"act={event.action}")
         
         # Risk level
-        extensions.append(f"flexString1={event.risk_level}")
-        extensions.append(f"flexString1Label=RiskLevel")
+        extensions.append(f"flexString2={event.risk_level}")
+        extensions.append(f"flexString2Label=RiskLevel")
         
         # Service name
         if event.service_name:
@@ -195,15 +201,15 @@ class CEFFormatter(LogFormatter):
         # Additional fields
         if event.additional_fields:
             # Map additional fields to CEF custom fields
-            flex_string_index = 2
-            custom_index = 1
+            flex_string_index = 3  # Start from 3 since we used flexString2 for risk level
+            custom_index = 2  # Start from 2 since we used deviceCustomNumber1 and deviceCustomString1
             
             for key, value in event.additional_fields.items():
                 if flex_string_index <= 4:  # CEF supports flexString1-4
                     extensions.append(f"flexString{flex_string_index}={self._escape_extension(str(value))}")
                     extensions.append(f"flexString{flex_string_index}Label={key}")
                     flex_string_index += 1
-                elif custom_index <= 3:  # Use custom fields cs1-cs6
+                elif custom_index <= 6:  # Use custom fields cs1-cs6
                     extensions.append(f"cs{custom_index}={self._escape_extension(str(value))}")
                     extensions.append(f"cs{custom_index}Label={key}")
                     custom_index += 1
